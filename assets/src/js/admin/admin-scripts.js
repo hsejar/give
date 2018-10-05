@@ -1308,11 +1308,6 @@ var give_setting_edit = false;
 				$self.el.update_link.addClass('active').hide().removeClass('give-hidden');
 
 				if (!$('#give-restart-upgrades').length) {
-					// Start update by ajax if background update does not work.
-					if ( ! Give.fn.getGlobalVar('ajax').length ) {
-						window.setTimeout(Give_Updates.start_db_update, 1000);
-					}
-
 					window.setTimeout(Give_Updates.get_db_updates_info, 1000, $self);
 				}
 			}

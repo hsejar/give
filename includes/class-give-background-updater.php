@@ -26,16 +26,33 @@ class Give_Background_Updater extends WP_Background_Process {
 	protected $action = 'give_db_updater';
 
 	/**
-	 * Dispatch updater.
-	 *
-	 * Updater will still run via cron job if this fails for any reason.
+	 * Initiate new async request
 	 */
-	public function dispatch() {
-		if ( give_test_ajax_works() ) {
-			parent::dispatch();
-		} elseif ( wp_doing_ajax() ) {
-			$this->maybe_handle();
-		}
+	public function __construct() {
+		parent::__construct();
+
+		add_action( "give_{$this->identifier}", array( $this, 'maybe_handle' ) );
+	}
+
+	/**
+	 * Get query URL
+	 *
+	 * @return string
+	 */
+	protected function get_query_url() {
+		return home_url( 'give-api/bg-process' );
+	}
+
+	/**
+	 * Get query args
+	 *
+	 * @return array
+	 */
+	protected function get_query_args() {
+		return array(
+			'give-action' => $this->identifier,
+			'nonce'       => wp_create_nonce( $this->identifier ),
+		);
 	}
 
 
@@ -199,7 +216,6 @@ class Give_Background_Updater extends WP_Background_Process {
 			return false;
 		}
 
-
 		// Pause upgrade immediately if found following:
 		// 1. Running update number greater then total update count
 		// 2. Processing percentage greater then 100%
@@ -302,27 +318,6 @@ class Give_Background_Updater extends WP_Background_Process {
 	}
 
 	/**
-	 * Get memory limit
-	 *
-	 * @return int
-	 */
-	protected function get_memory_limit() {
-		if ( function_exists( 'ini_get' ) ) {
-			$memory_limit = ini_get( 'memory_limit' );
-		} else {
-			// Sensible default.
-			$memory_limit = '128M';
-		}
-
-		if ( ! $memory_limit || '-1' === $memory_limit ) {
-			// Unlimited, set to 32GB.
-			$memory_limit = '32000M';
-		}
-
-		return intval( $memory_limit ) * 1024 * 1024;
-	}
-
-	/**
 	 * Maybe process queue
 	 *
 	 * Checks whether data exists within the queue and that
@@ -345,57 +340,6 @@ class Give_Background_Updater extends WP_Background_Process {
 		check_ajax_referer( $this->identifier, 'nonce' );
 
 		$this->handle();
-
-		wp_die();
-	}
-
-	/**
-	 * Handle
-	 *
-	 * Pass each queue item to the task handler, while remaining
-	 * within server memory and time limit constraints.
-	 */
-	protected function handle() {
-		$this->lock_process();
-
-		do {
-			$batch = $this->get_batch();
-
-			foreach ( $batch->data as $key => $value ) {
-				$task = $this->task( $value );
-
-				if ( false !== $task ) {
-					$batch->data[ $key ] = $task;
-				} else {
-					unset( $batch->data[ $key ] );
-				}
-
-				if ( $this->time_exceeded() || $this->memory_exceeded() ) {
-					// Batch limits reached.
-					break;
-				}
-			}
-
-			// Update or delete current batch.
-			if ( ! empty( $batch->data ) ) {
-				$this->update( $batch->key, $batch->data );
-			} else {
-				$this->delete( $batch->key );
-			}
-		} while ( ! $this->time_exceeded() && ! $this->memory_exceeded() && ! $this->is_queue_empty() );
-
-		$this->unlock_process();
-
-		// Start next batch or complete process.
-		if ( ! $this->is_queue_empty() ) {
-
-			// Dispatch only if ajax works.
-			if( give_test_ajax_works() ) {
-				$this->dispatch();
-			}
-		} else {
-			$this->complete();
-		}
 
 		wp_die();
 	}

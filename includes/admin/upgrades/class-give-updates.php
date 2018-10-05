@@ -144,7 +144,7 @@ class Give_Updates {
 		/**
 		 * Setup hooks.
 		 */
-		add_action( 'init', array( $this, '__register_upgrade' ), 9999 );
+		add_action( 'init', array( $this, '__register_upgrade' ), 9 );
 		add_action( 'give_set_upgrade_completed', array( $this, '__flush_resume_updates' ), 9999 );
 		add_action( 'wp_ajax_give_db_updates_info', array( $this, '__give_db_updates_info' ) );
 		add_action( 'wp_ajax_give_run_db_updates', array( $this, '__give_start_updating' ) );
@@ -187,9 +187,9 @@ class Give_Updates {
 	 * @access public
 	 */
 	public function __register_upgrade() {
-		if ( ! is_admin() ) {
-			return;
-		}
+		// if ( ! is_admin() ) {
+		// 	return;
+		// }
 
 		/**
 		 * Fire the hook
