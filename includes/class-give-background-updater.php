@@ -440,6 +440,17 @@ class Give_Background_Updater extends WP_Background_Process {
 		return $this->cron_hook_identifier;
 	}
 
+	/**
+	 * Get if process running or not
+	 *
+	 * @since  2.2.6
+	 * @access public
+	 * @return mixed|string
+	 */
+	public function get_is_process_running() {
+		return $this->is_process_running();
+	}
+
 
 	/**
 	 * Flush background update related cache to prevent task to go to stalled state.
