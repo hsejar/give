@@ -679,6 +679,7 @@ class Give_API {
 			'forms',
 			'donors',
 			'donations',
+			'bg-process'
 		) );
 
 		$query = isset( $wp_query->query_vars['give-api'] ) ? $wp_query->query_vars['give-api'] : null;
